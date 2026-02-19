@@ -1,5 +1,6 @@
 import requests
 import re, os, json
+import sys
 from img2pdf import convert
 import yt_dlp
 import argparse
@@ -56,7 +57,12 @@ def download_presentation(id):
         with open(f"./presentations/{id}.json", 'w') as outfile:
             outfile.writelines(json.dumps(data, indent=4))
 
-id = re.findall('([0-z|-]{12})', args.url)[0]
+match = re.search(r"/p/(?:edit/)?([0-9a-zA-Z-]{12})", args.url)
+if not match:
+    print("Please provide a valid Prezi URL that contains the 12-character presentation ID.")
+    sys.exit(1)
+
+id = match.group(1)
 
 if "prezi.com/v/" in args.url:
     download_video(id)
