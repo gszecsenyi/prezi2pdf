@@ -1,15 +1,18 @@
 import requests
-import re, os, json
-import sys
+import re, os, json, sys
+from io import BytesIO
 from img2pdf import convert
 import yt_dlp
 import argparse
+from PIL import Image
+from pptx import Presentation
 
 
 # ArgParse
 parser = argparse.ArgumentParser(description='Download Prezi Presentations and Videos')
 parser.add_argument('--url','-u',dest='url', action='store', help='Prezi URL', required=True)
 parser.add_argument('--download-json','-j',dest='download_json', action='store_true', help='Download JSON file', required=False)
+parser.add_argument('--output-type','-t',dest='output_type', choices=['pdf','pptx'], default='pdf', help='Choose output format for presentations', required=False)
 
 args = parser.parse_args()
 
@@ -34,6 +37,34 @@ def download_video(id):
             outfile.writelines(json.dumps(data, indent=4))
 
 
+def save_presentation_pdf(content, id):
+    with open(f'presentations/{id}.pdf', 'wb') as pdf:
+        pdf.write(convert(content))
+
+
+def save_presentation_ppt(content, id):
+    first_image = Image.open(BytesIO(content[0]))
+    width_px, height_px = first_image.size
+    first_image.close()
+    emu_per_px = 914400 / 96
+    slide_width = int(width_px * emu_per_px)
+    slide_height = int(height_px * emu_per_px)
+    prs = Presentation()
+    prs.slide_width = slide_width
+    prs.slide_height = slide_height
+    blank_layout = prs.slide_layouts[6]
+    for page_data in content:
+        slide = prs.slides.add_slide(blank_layout)
+        image_stream = BytesIO(page_data)
+        slide.shapes.add_picture(
+            image_stream,
+            0,
+            0,
+            width=slide_width,
+            height=slide_height,
+        )
+    prs.save(f'presentations/{id}.pptx')
+
 
 def download_presentation(id):
     url = f"https://prezi.com/api/v2/storyboard/{id}/"
@@ -51,8 +82,10 @@ def download_presentation(id):
         content.append(r.content)
         print(f"Downloading slide {i+1}/{total}")
         i += 1
-    with open(f'presentations/{id}.pdf', 'wb') as pdf:
-        pdf.write(convert(content))
+    if args.output_type == 'pdf':
+        save_presentation_pdf(content, id)
+    else:
+        save_presentation_ppt(content, id)
     if args.download_json:
         with open(f"./presentations/{id}.json", 'w') as outfile:
             outfile.writelines(json.dumps(data, indent=4))
@@ -74,6 +107,3 @@ elif "prezi.com/" in args.url:
     download_presentation(id)
 else:
     print("Please provide a valid prezi URL")
-
-
-

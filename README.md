@@ -16,3 +16,4 @@ https://prezi.com/p/edit/vk713bm8qr-k/
 ```
 In the case above, to get this link I have to open the presentation in the "Edit" mode.
 If you only have the public viewing link (`https://prezi.com/p/<ID>/…`), the script picks up the 12-character ID automatically and you can still download the slides.
+By default the download gets converted to PDF, but you can pass `-t pptx` if you prefer a PowerPoint output; the same `presentations/` folder will accumulate the `.pptx` file.
