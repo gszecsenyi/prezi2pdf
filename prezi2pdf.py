@@ -90,7 +90,7 @@ def download_presentation(id):
         with open(f"./presentations/{id}.json", 'w') as outfile:
             outfile.writelines(json.dumps(data, indent=4))
 
-match = re.search(r"/p/(?:edit/)?([0-9a-zA-Z-]{12})", args.url)
+match = re.search(r"prezi\.com/(?:p/(?:edit/)?)?([0-9a-zA-Z-]{12})", args.url)
 if not match:
     print("Please provide a valid Prezi URL that contains the 12-character presentation ID.")
     sys.exit(1)
